@@ -1,0 +1,7 @@
+.DS_Store
+### Artefact Folders ###
+BuildSystem/Artefact/
+Source/**/Artefact/
+### Rust & Cargo ###
+Source/**/target/
+Source/openhanse-cli/runtime/

@@ -1,0 +1,12 @@
+[package]
+name = "openhanse_test_runner"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eframe = "0.31"
+portable-pty = "0.9"
+
+[[bin]]
+name = "openhanse-test-pty"
+path = "src/bin/pty.rs"

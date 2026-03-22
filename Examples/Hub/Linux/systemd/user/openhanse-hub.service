@@ -1,0 +1,15 @@
+[Unit]
+Description=OpenHanse Hub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/lib/openhanse-hub
+ExecStart=%h/.local/lib/openhanse-hub/openhanse-hub --id hub --peer-mode hub --server http://0.0.0.0:8080
+Restart=always
+RestartSec=3
+Environment=RUST_LOG=info,tower_http=info
+
+[Install]
+WantedBy=default.target
