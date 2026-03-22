@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wiki: P2P Tunneling &amp; NAT Traversal</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8f9fb;
+    --surface2: #eef0f4;
+    --border: #d1d5df;
+    --text: #1a1d27;
+    --text-muted: #5f6577;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --orange: #d97706;
+    --orange-light: #fef3c7;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --cyan: #0891b2;
+    --cyan-light: #cffafe;
+    --purple: #7c3aed;
+    --purple-light: #ede9fe;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 2rem 2rem 4rem;
+  }
+  h1 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin: 2.5rem 0 0.75rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--surface2);
+  }
+  h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+  p { margin-bottom: 0.85rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    display: inline-block;
+  }
+  .toc-title { font-weight: 600; margin-bottom: 0.4rem; font-size: 0.95rem; }
+  .toc ol { padding-left: 1.4rem; font-size: 0.9rem; }
+  .toc li { margin: 0.2rem 0; }
+  .toc ol ol { margin-top: 0.15rem; }
+
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text);
+    margin: 1rem 0 1.25rem;
+  }
+  .diagram .comment { color: var(--text-muted); }
+  .diagram .highlight { color: var(--red); font-weight: 600; }
+  .diagram .ok { color: var(--green); font-weight: 600; }
+
+  .infobox {
+    border-left: 4px solid;
+    border-radius: 0 6px 6px 0;
+    padding: 0.85rem 1.15rem;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+  .infobox-blue { border-color: var(--accent); background: var(--accent-light); }
+  .infobox-green { border-color: var(--green); background: var(--green-light); }
+  .infobox-orange { border-color: var(--orange); background: var(--orange-light); }
+  .infobox-red { border-color: var(--red); background: var(--red-light); }
+  .infobox-purple { border-color: var(--purple); background: var(--purple-light); }
+  .infobox strong { font-weight: 600; }
+
+  code {
+    background: var(--surface2);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 0.88em;
+  }
+
+  .table-wrap { overflow-x: auto; margin: 1rem 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+  th, td { padding: 0.6rem 0.85rem; text-align: left; border: 1px solid var(--border); }
+  th { background: var(--surface); font-weight: 600; font-size: 0.85rem; }
+  .highlight-row td { background: #dbeafe40; }
+
+  .step {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: white;
+    font-weight: 700; font-size: 0.8rem;
+    margin-right: 0.4rem; flex-shrink: 0;
+  }
+  .step-row { display: flex; align-items: flex-start; margin: 0.6rem 0; gap: 0.25rem; }
+  .step-row p { margin: 0; }
+
+  .tag { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; }
+  .tag-private { background: var(--orange-light); color: var(--orange); }
+  .tag-public { background: var(--green-light); color: var(--green); }
+  .tag-blocked { background: var(--red-light); color: var(--red); }
+
+  .badge {
+    display: inline-block; padding: 0.12rem 0.5rem; border-radius: 5px;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-blue { background: var(--accent-light); color: var(--accent); }
+  .badge-cyan { background: var(--cyan-light); color: var(--cyan); }
+
+  .layer-label {
+    display: inline-block; width: 32px; text-align: center;
+    font-weight: 700; font-size: 0.7rem; border-radius: 4px;
+    padding: 0.1rem 0; margin-right: 0.2rem;
+  }
+  .l2 { background: var(--green-light); color: var(--green); }
+  .l3 { background: var(--accent-light); color: var(--accent); }
+  .l4 { background: var(--orange-light); color: var(--orange); }
+  .l7 { background: var(--purple-light); color: var(--purple); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .col-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; }
+  .col-box h4 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+  .col-box p, .col-box ul { font-size: 0.88rem; margin-bottom: 0.3rem; }
+  .col-box ul { padding-left: 1.2rem; }
+  .col-box li { margin-bottom: 0.15rem; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1rem 0; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem; }
+  .card h4 { font-size: 0.95rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem; }
+  .card p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+  .card ul { padding-left: 1.2rem; font-size: 0.85rem; color: var(--text-muted); }
+  .card li { margin-bottom: 0.2rem; }
+
+  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0; font-size: 0.85rem; }
+  .proscons .pro::before { content: "+ "; color: var(--green); font-weight: 700; }
+  .proscons .con::before { content: "- "; color: var(--red); font-weight: 700; }
+
+  .verdict {
+    background: var(--accent-light); border: 2px solid var(--accent);
+    border-radius: 8px; padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+  }
+  .verdict h4 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1.05rem; }
+  .verdict p { margin-bottom: 0.4rem; }
+
+  .difficulty-scale { display: flex; flex-direction: column; gap: 0; margin: 1.25rem 0; }
+  .diff-row {
+    display: grid; grid-template-columns: 130px 1fr 180px;
+    align-items: center; gap: 0.75rem; padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border); border-bottom: none; font-size: 0.88rem;
+  }
+  .diff-row:first-child { border-radius: 6px 6px 0 0; }
+  .diff-row:last-child { border-bottom: 1px solid var(--border); border-radius: 0 0 6px 6px; }
+  .diff-row.active { background: var(--accent-light); border-color: var(--accent); }
+  .diff-row.active + .diff-row { border-top-color: var(--accent); }
+  .diff-label { font-weight: 600; white-space: nowrap; }
+  .diff-bar-wrap { height: 22px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .diff-bar {
+    height: 100%; border-radius: 4px;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 0.5rem; font-size: 0.72rem; font-weight: 700;
+    color: white; white-space: nowrap;
+  }
+  .diff-bar.trivial { width: 10%; background: #22c55e; }
+  .diff-bar.easy { width: 30%; background: #84cc16; }
+  .diff-bar.medium { width: 55%; background: #eab308; color: var(--text); }
+  .diff-bar.hard { width: 75%; background: #f97316; }
+  .diff-bar.extreme { width: 92%; background: #ef4444; }
+  .diff-bar.adversarial { width: 100%; background: linear-gradient(90deg, #dc2626, #7f1d1d); }
+  .diff-example { font-size: 0.82rem; color: var(--text-muted); }
+  .diff-badge {
+    display: inline-block; padding: 0.05rem 0.45rem; border-radius: 4px;
+    font-size: 0.72rem; font-weight: 700; margin-left: 0.3rem; vertical-align: middle;
+  }
+  .diff-badge-green { background: var(--green-light); color: var(--green); }
+  .diff-badge-yellow { background: var(--orange-light); color: var(--orange); }
+  .diff-badge-red { background: var(--red-light); color: var(--red); }
+
+  .footer {
+    margin-top: 3rem; padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.82rem; color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+
+<h1>P2P Tunneling &amp; NAT Traversal</h1>
+<p class="subtitle">OpenHanse - Wiki - Network Address Translation (NAT)</p>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- TABLE OF CONTENTS                                                  -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#scenario">Our Scenario</a></li>
+    <li>
+      <a href="#problem">The Problem</a>
+      <ol>
+        <li><a href="#nat-types">NAT Types</a></li>
+        <li><a href="#challenges">NAT Traversal Challenges</a></li>
+        <li><a href="#techniques">NAT Traversal Techniques</a></li>
+      </ol>
+    </li>
+    <li>
+      <a href="#solutions">Existing Solutions</a>
+      <ol>
+        <li><a href="#vpn">VPN</a></li>
+        <li><a href="#overlay">Overlay Networks</a></li>
+      </ol>
+    </li>
+    <li>
+      <a href="#technical">Technical Approaches</a>
+      <ol>
+        <li><a href="#relay">Relay Based Communication</a></li>
+        <li><a href="#direct-p2p">Direct P2P Communication</a></li>
+        <li><a href="#relay-vs-p2p">Relay vs. Direct P2P</a></li>
+        <li><a href="#difficulty">Difficulty Levels of P2P Direct Communication</a></li>
+        <li><a href="#protocols">Tunneling Protocols</a></li>
+      </ol>
+    </li>
+    <li>
+      <a href="#summary">Summary &amp; Recommendation</a>
+      <ol>
+        <li><a href="#reference-case">Reference Case</a></li>
+        <li><a href="#recommendation">Recommendation</a></li>
+        <li><a href="#outlook">Outlook</a></li>
+      </ol>
+    </li>
+  </ol>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 1. OUR SCENARIO                                                    -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<h2 id="scenario">1. Our Scenario</h2>
+
+<p>We have two devices that need to communicate directly with each other — for example, to access a server running on one device from the other:</p>
+
+<div class="two-col">
+  <div class="col-box">
+    <h4>Device A — iPhone</h4>
+    <ul>
+      <li>Connected via <strong>5G mobile network</strong></li>
+      <li>Private IP assigned by carrier: <code>10.48.12.97</code></li>
+      <li>Sits behind the carrier's NAT (CGNAT)</li>
+      <li>Running a service (e.g. HTTP server) on port 8080</li>
+    </ul>
+  </div>
+  <div class="col-box">
+    <h4>Device B — MacBook</h4>
+    <ul>
+      <li>Connected via <strong>office/home LAN</strong></li>
+      <li>Private IP assigned by router: <code>192.168.1.42</code></li>
+      <li>Sits behind the office/home NAT router</li>
+      <li>Running a service (e.g. SSH server) on port 22</li>
+    </ul>
+  </div>
+</div>
+
+<p><strong>Goal:</strong> The iPhone wants to connect to the MacBook's SSH server, and the MacBook wants to reach the iPhone's HTTP server. Neither can — because both devices sit behind NAT.</p>
+
+<div class="diagram">
+┌─────────────┐       CGNAT / Symmetric NAT        ┌──────────────┐
+│  iPhone 5G  │ ──── 10.x.x.x ──▶ Carrier NAT ──▶ │              │
+│  (Client A) │       No public IP reachable        │   Internet   │
+└─────────────┘                                     │              │
+                                                    │              │
+┌─────────────┐       Home/Office NAT               │              │
+│  MacBook    │ ──── 192.168.x.x ▶ Router NAT ──▶  │              │
+│  (Client B) │       Port-restricted               └──────────────┘
+└─────────────┘
+
+<span class="highlight">Neither device has a publicly routable IP that the other can reach.</span>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 2. THE PROBLEM                                                     -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<h2 id="problem">2. The Problem</h2>
+
+<p>IPv4 only has ~4.3 billion addresses — not enough for every device. So devices use <strong>private IPs</strong> (e.g. <code>10.x.x.x</code>, <code>192.168.x.x</code>) inside their local network and share a single <strong>public IP</strong> via the router. <strong>Network Address Translation (NAT)</strong> handles this: it rewrites outgoing packets from the private IP to the router's public IP and remembers the mapping so replies find their way back. This works transparently for <em>outgoing</em> connections — but creates a fundamental problem for <em>incoming</em> ones:</p>
+
+<div class="infobox infobox-red">
+  <strong>The fundamental problem:</strong> A NAT only forwards incoming packets if they match an existing mapping — and mappings are only created by <em>outgoing</em> connections from the device behind the NAT. If nobody inside has talked to you first, your packets are silently dropped.
+</div>
+
+<div class="infobox infobox-blue">
+  <strong>Important nuance:</strong> Native public IPv6 can remove much of this reachability problem because devices can again have globally routable addresses. In practice, however, many deployments are still IPv4-only, dual-stack with restrictive firewalls, or only partially IPv6-capable. NAT traversal and relay fallback therefore remain highly relevant.
+</div>
+
+<div class="diagram">
+  ┌──────────────┐                                                    ┌──────────────┐
+  │   iPhone     │       Carrier NAT              Office NAT          │   MacBook    │
+  │ 10.48.12.97  │──▶  85.195.22.1:?    <span class="highlight">???</span>    85.195.44.8:?  ◀──│ 192.168.1.42 │
+  │              │                                                    │              │
+  │  "I want to  │  <span class="highlight">I don't know the</span>     <span class="highlight">I don't know the</span>    │  "I want to  │
+  │  reach the   │  <span class="highlight">MacBook's private</span>    <span class="highlight">iPhone's private</span>    │  reach the   │
+  │  MacBook"    │  <span class="highlight">IP or NAT port</span>      <span class="highlight">IP or NAT port</span>     │  iPhone"     │
+  └──────────────┘                                                    └──────────────┘
+
+  <span class="highlight">DEADLOCK: Each device needs the other to send first, but neither can.</span>
+</div>
+
+
+<!-- 2.1 NAT Types -->
+<h3 id="nat-types">2.1 NAT Types</h3>
+
+<p>Not all NATs behave the same way. The classic "cone vs. symmetric" labels are a useful teaching model; the more precise RFC 4787 language talks about endpoint-independent vs. endpoint-dependent mapping and filtering. Either way, the behavior determines how hard it is to establish a direct P2P connection:</p>
+
+<table>
+  <thead>
+    <tr><th>NAT Type</th><th>Mapping Behaviour</th><th>Who Can Send Packets In?</th><th>Difficulty</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Full Cone</strong></td>
+      <td>Same external port for all destinations</td>
+      <td>Anyone who knows the mapped port</td>
+      <td><span class="badge badge-green">Easy</span></td>
+    </tr>
+    <tr>
+      <td><strong>Address-Restricted Cone</strong></td>
+      <td>Same external port for all destinations</td>
+      <td>Only hosts the internal device has contacted</td>
+      <td><span class="badge badge-green">Easy</span></td>
+    </tr>
+    <tr>
+      <td><strong>Port-Restricted Cone</strong></td>
+      <td>Same external port for all destinations</td>
+      <td>Only the exact host:port pair previously contacted</td>
+      <td><span class="badge badge-orange">Medium</span></td>
+    </tr>
+    <tr>
+      <td><strong>Symmetric NAT</strong></td>
+      <td><strong>Different</strong> external port per destination</td>
+      <td>Only the exact host:port for that specific mapping</td>
+      <td><span class="badge badge-red">Hard</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The critical difference: many easier NATs keep the public mapping stable enough that endpoint discovery remains useful. Harder, endpoint-dependent NATs may create different mappings per destination, which makes simple STUN discovery much less useful for the actual peer connection.</p>
+
+<h3>CGNAT — Carrier-Grade NAT</h3>
+
+<p>Mobile carriers add another layer with <strong>CGNAT</strong>. Your iPhone may traverse <em>two</em> NATs before reaching the Internet:</p>
+
+<div class="diagram">
+  iPhone              Carrier Internal NAT          Carrier Public NAT        Internet
+  10.48.12.97   ──▶   100.64.5.18            ──▶   85.195.22.1         ──▶   ...
+  <span class="tag-private">private</span>              <span class="tag-private">CGNAT range (shared)</span>        <span class="tag-public">public (shared by</span>
+                                                     <span class="tag-public">thousands of users)</span>
+
+  <span class="comment">The 100.64.0.0/10 range is reserved specifically for CGNAT.</span>
+  <span class="comment">You cannot configure port forwarding on your carrier's NAT equipment.</span>
+  <span class="comment">The public IP is shared with thousands of other subscribers.</span>
+</div>
+
+
+<!-- 2.2 NAT Traversal Challenges -->
+<h3 id="challenges">2.2 NAT Traversal Challenges</h3>
+
+<p>Establishing direct communication between two devices behind NAT is hard for several compounding reasons:</p>
+
+<div class="cards">
+  <div class="card">
+    <h4>No Inbound Path</h4>
+    <p>NAT only creates mappings for outgoing traffic. There is no way to send an unsolicited packet to a device behind NAT — the NAT has no table entry and silently drops it.</p>
+  </div>
+  <div class="card">
+    <h4>Unknown Addresses</h4>
+    <p>Neither device knows the other's public IP:port. Even the device itself doesn't know its own public mapping — it only sees its private address.</p>
+  </div>
+  <div class="card">
+    <h4>Symmetric NAT Randomness</h4>
+    <p>On Symmetric NAT (common on 5G), the external port changes per destination. Discovering the port via a STUN server tells you the port for <em>that</em> server, not for your peer.</p>
+  </div>
+  <div class="card">
+    <h4>Mapping Expiry</h4>
+    <p>NAT mappings expire after inactivity (typically 30-120 seconds for UDP). Connections must send keepalive packets or the "hole" closes and communication drops.</p>
+  </div>
+  <div class="card">
+    <h4>Mobile Network Instability</h4>
+    <p>5G devices change IP addresses during cell handovers. The entire NAT mapping can be invalidated mid-session, requiring re-establishment of the connection.</p>
+  </div>
+  <div class="card">
+    <h4>UDP Blocking</h4>
+    <p>Some networks (enterprise firewalls, restrictive carriers) block or throttle UDP traffic entirely. For the mesh and overlay approaches discussed here, that usually eliminates the direct path and forces relay or alternate transport.</p>
+  </div>
+</div>
+
+
+<!-- 2.3 NAT Traversal Techniques -->
+<h3 id="techniques">2.3 NAT Traversal Techniques</h3>
+
+<p>Most modern <strong>UDP-based</strong> P2P systems use variations of three core building blocks, often combined via ICE:</p>
+
+<div class="cards">
+  <div class="card">
+    <h4><span class="badge badge-green">STUN</span> Session Traversal Utilities for NAT</h4>
+    <p>A client contacts a public STUN server to discover its own public IP:port mapping. Both peers exchange these "reflexive candidates" and attempt direct UDP hole-punching.</p>
+    <div class="proscons">
+      <div class="pro">Zero relay cost — fully P2P once connected</div>
+      <div class="con">Often struggles with hard / endpoint-dependent NATs and may still need relay fallback</div>
+    </div>
+  </div>
+  <div class="card">
+    <h4><span class="badge badge-orange">TURN</span> Traversal Using Relays around NAT</h4>
+    <p>Fallback relay server that forwards all traffic when direct connection fails. Guarantees connectivity but adds latency and bandwidth cost.</p>
+    <div class="proscons">
+      <div class="pro">Works through any NAT type, even Symmetric</div>
+      <div class="con">All traffic relayed — adds latency + server cost</div>
+    </div>
+  </div>
+  <div class="card">
+    <h4><span class="badge badge-blue">ICE</span> Interactive Connectivity Establishment</h4>
+    <p>Framework that orchestrates STUN and TURN. Gathers candidate paths, tests connectivity in priority order, and picks the best working path.</p>
+    <div class="proscons">
+      <div class="pro">Graceful fallback when paired with relay candidates</div>
+      <div class="con">Initial connection setup is more complex and can be slower than a fixed relay</div>
+    </div>
+  </div>
+  <div class="card">
+    <h4><span class="badge badge-cyan">Birthday Attack / Port Prediction</span></h4>
+    <p>Advanced family of techniques for hard NAT cases: peers probe predicted port ranges or try additional coordination strategies, hoping to create a direct path without relaying. Public implementation details and real-world success rates vary by product and network.</p>
+    <div class="proscons">
+      <div class="pro">Can improve direct-connect odds in otherwise difficult NAT scenarios</div>
+      <div class="con">Probabilistic — not guaranteed, and highly implementation-dependent</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 3. EXISTING SOLUTIONS                                              -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<h2 id="solutions">3. Existing Solutions</h2>
+
+<p>Since neither device can directly reach the other, all solutions rely on the same core idea: <strong>use a third party that both devices CAN reach</strong> — a server with a public IP. The solutions differ in how much they rely on that server, and at which network layer they operate.</p>
+
+
+<!-- 3.1 VPN -->
+<h3 id="vpn">3.1 VPN (Network Layer)</h3>
+
+<p>The simplest approach: both devices connect <em>outward</em> to a VPN server in the cloud. Since outgoing connections work through NAT, both can establish a tunnel to the server. The server then routes traffic between them.</p>
+
+<div class="diagram">
+  ┌──────────────┐                 ┌──────────────────┐                 ┌──────────────┐
+  │   iPhone     │   <span class="ok">outgoing</span>      │   VPN Server     │   <span class="ok">outgoing</span>      │   MacBook    │
+  │ 10.48.12.97  │────tunnel──────▶│  203.0.113.50    │◀──────tunnel────│ 192.168.1.42 │
+  │              │   <span class="ok">(works!)</span>      │  (public IP)     │   <span class="ok">(works!)</span>      │              │
+  │  VPN IP:     │                 │                  │                 │  VPN IP:     │
+  │  10.8.0.2    │◀───encrypted───▶│  Routes between  │◀───encrypted───▶│  10.8.0.3    │
+  └──────────────┘    traffic      │  VPN clients     │    traffic      └──────────────┘
+                                   └──────────────────┘
+
+  <span class="ok">✓ Both connections are OUTGOING → both pass through NAT successfully</span>
+  <span class="comment">  The VPN server acts as a permanent relay for all traffic.</span>
+</div>
+
+<div class="two-col">
+  <div class="col-box" style="border-color: var(--green);">
+    <h4 style="color: var(--green);">Pros</h4>
+    <ul>
+      <li>Simple, well-understood model</li>
+      <li>Works through any NAT type (outgoing connections always work)</li>
+      <li>Full L3 IP connectivity between clients</li>
+      <li>Mature tooling (OpenVPN, WireGuard, IPsec)</li>
+    </ul>
+  </div>
+  <div class="col-box" style="border-color: var(--red);">
+    <h4 style="color: var(--red);">Cons</h4>
+    <ul>
+      <li><strong>Network layer (L3)</strong> — usually requires a TUN/TAP interface, admin/root privileges, or a system-level VPN profile; some products also offer userspace modes, but with trade-offs</li>
+      <li>All traffic relayed through server — adds latency</li>
+      <li>Server bandwidth = bottleneck, cost scales with traffic</li>
+      <li>Traffic is usually decrypted and re-routed at the VPN server unless you add application-level end-to-end encryption</li>
+      <li>Requires provisioning and maintaining a server</li>
+    </ul>
+  </div>
+</div>
+
+<p>Examples: <strong>OpenVPN</strong>, <strong>WireGuard</strong> (client-server mode), <strong>IPsec/IKEv2</strong>.</p>
+
+
+<!-- 3.2 Overlay Networks -->
+<h3 id="overlay">3.2 Overlay Networks (Mesh Overlays)</h3>
+
+<p>Overlay networks improve on the basic VPN by adding coordination and NAT traversal. They usually combine a control plane for identity, discovery, and policy with an L2 or L3 tunnel data plane. After setup, they attempt a <strong>direct peer-to-peer connection</strong> between devices; if direct connection fails, they fall back to relaying.</p>
+
+<div class="diagram">
+  <span class="comment">── Phase 1: Discovery (via coordination server) ──</span>
+
+  ┌──────────────┐                 ┌──────────────────┐                 ┌──────────────┐
+  │   iPhone     │    <span class="ok">outgoing</span>     │  Coordination    │    <span class="ok">outgoing</span>     │   MacBook    │
+  │              │───registers────▶│  Server          │◀───registers────│              │
+  │              │◀───receives ────│  "MacBook is at  │────receives───▶ │              │
+  │              │   peer info     │   85.195.44.8    │   peer info     │              │
+  └──────────────┘                 └──────────────────┘                 └──────────────┘
+
+  <span class="comment">── Phase 2: Direct connection attempt (NAT hole punching) ──</span>
+
+  ┌──────────────┐                                                     ┌──────────────┐
+  │   iPhone     │◀═══════ encrypted traffic flows directly ══════════▶│   MacBook    │
+  └──────────────┘          <span class="ok">(no server in the middle)</span>                   └──────────────┘
+
+  <span class="comment">── Fallback: If direct connection fails ──</span>
+
+  ┌──────────────┐                 ┌──────────────────┐                 ┌──────────────┐
+  │   iPhone     │═══encrypted════▶│  Relay Server    │◀═══encrypted═══│   MacBook    │
+  │              │◀══traffic═══════│  (DERP / Root)   │════traffic════▶ │              │
+  └──────────────┘                 └──────────────────┘                 └──────────────┘
+</div>
+
+<div class="two-col">
+  <div class="col-box" style="border-color: var(--green);">
+    <h4 style="color: var(--green);">Pros</h4>
+    <ul>
+      <li><strong>Overlay model</strong> — coordination and policy are often user-space, while the data plane may still use kernel or system VPN integration depending on platform</li>
+      <li>Direct P2P when available — lower latency and less persistent server bottleneck</li>
+      <li>Peer traffic is transport-encrypted end-to-end; relays can often forward ciphertext without seeing payloads</li>
+      <li>Server only handles tiny control messages</li>
+      <li>Automatic NAT traversal, handles IP changes</li>
+      <li>Zero-config setup (install app + join network)</li>
+    </ul>
+  </div>
+  <div class="col-box" style="border-color: var(--red);">
+    <h4 style="color: var(--red);">Cons</h4>
+    <ul>
+      <li>Relies on coordination server for initial setup</li>
+      <li>Direct connection is not guaranteed; outcome depends on NAT behavior, IPv6 availability, and UDP reachability</li>
+      <li>More complex operational model than a fixed client-server VPN</li>
+      <li>Vendor dependency (unless self-hosted)</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Overlay Network Solutions — Comparison</h3>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Solution</th>
+        <th>Protocol</th>
+        <th>Layer</th>
+        <th>NAT Traversal</th>
+        <th>Direct Path</th>
+        <th>Self-Hostable</th>
+        <th>Mobile</th>
+        <th>License</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight-row">
+        <td><strong>Tailscale</strong></td>
+        <td>WireGuard</td>
+        <td><span class="layer-label l3">L3</span></td>
+        <td>Coordination + STUN/DERP + vendor heuristics</td>
+        <td>Often, network-dependent</td>
+        <td>Control plane via <strong>Headscale</strong></td>
+        <td>iOS, Android, macOS</td>
+        <td>Client OSS / SaaS proprietary</td>
+      </tr>
+      <tr>
+        <td><strong>ZeroTier</strong></td>
+        <td>Custom encrypted Ethernet overlay</td>
+        <td><span class="layer-label l2">L2</span></td>
+        <td>Roots + UDP hole punch</td>
+        <td>Often, network-dependent</td>
+        <td>Yes (controller)</td>
+        <td>iOS, Android, macOS</td>
+        <td>Business-source / commercial terms</td>
+      </tr>
+      <tr>
+        <td><strong>Nebula</strong></td>
+        <td>Noise-based tunnel</td>
+        <td><span class="layer-label l3">L3</span></td>
+        <td>Lighthouse UDP punch</td>
+        <td>Often direct on permissive UDP</td>
+        <td>Yes — fully OSS</td>
+        <td>Limited / early mobile</td>
+        <td>MIT</td>
+      </tr>
+      <tr>
+        <td><strong>NetBird</strong></td>
+        <td>WireGuard</td>
+        <td><span class="layer-label l3">L3</span></td>
+        <td>ICE (STUN/TURN)</td>
+        <td>Often, network-dependent</td>
+        <td>Yes — fully OSS</td>
+        <td>iOS, Android, macOS</td>
+        <td>BSD-3</td>
+      </tr>
+      <tr>
+        <td><strong>Cloudflare WARP</strong></td>
+        <td>WireGuard or MASQUE (mode-dependent)</td>
+        <td><span class="layer-label l3">L3</span></td>
+        <td>Cloudflare PoPs relay</td>
+        <td>No direct WARP-to-WARP</td>
+        <td>No</td>
+        <td>iOS, Android, macOS</td>
+        <td>Proprietary</td>
+      </tr>
+      <tr>
+        <td><strong>n2n</strong></td>
+        <td>Custom (AES/ChaCha20)</td>
+        <td><span class="layer-label l2">L2</span></td>
+        <td>Supernode punch</td>
+        <td>Can be direct; often supernode-assisted</td>
+        <td>Yes — fully OSS</td>
+        <td>Limited</td>
+        <td>GPLv3</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="cards">
+  <div class="card" style="border-color: var(--accent);">
+    <h4><span class="badge badge-blue">Top Pick</span> Tailscale / Headscale</h4>
+    <p>Built on WireGuard with mature coordination, strong clients, and polished relay fallback. Direct connectivity depends on the network, but the operational experience is strong even when traffic must relay.</p>
+    <ul>
+      <li>Kernel-mode WireGuard on Linux = near-native throughput</li>
+      <li>DERP relay servers as fallback (optional / self-hostable with the right setup)</li>
+      <li>MagicDNS, ACLs, Taildrop file sharing, Funnel</li>
+      <li>Native iOS &amp; macOS apps with seamless reconnect</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>ZeroTier</h4>
+    <p>L2 overlay — acts like a virtual Ethernet switch. Supports non-IP protocols (mDNS, Bonjour). Custom crypto protocol, planetary root servers.</p>
+    <ul>
+      <li>Virtual MAC addresses, broadcast/multicast support</li>
+      <li>BSL license: free personal, license for commercial</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Nebula (Defined Networking)</h4>
+    <p>Fully open-source overlay with certificate-based identity. Requires a self-hosted "lighthouse" node. Strong control, more setup effort, and less polished mobile support.</p>
+    <ul>
+      <li>MIT licensed — no vendor lock-in</li>
+      <li>Certificate-based auth, strong security model</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>NetBird</h4>
+    <p>Newer WireGuard-based mesh using standard ICE (STUN/TURN). Fully open-source with clean management UI. Good middle ground.</p>
+    <ul>
+      <li>BSD-3 license, fully self-hostable</li>
+      <li>Built-in ACL + SSO integration</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Decision Matrix</h3>
+
+<p>Directional 1-5 scoring for our reference scenario (iPhone 5G ↔ MacBook LAN, CIO perspective). These are product judgments for this use case, not lab benchmarks:</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Criterion</th>
+        <th>Weight</th>
+        <th>Tailscale</th>
+        <th>ZeroTier</th>
+        <th>Nebula</th>
+        <th>NetBird</th>
+        <th>Raw WireGuard</th>
+        <th>WebRTC</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>NAT Traversal Success Rate</td>
+        <td>25%</td>
+        <td><strong>5</strong></td>
+        <td>4</td>
+        <td>3</td>
+        <td>4</td>
+        <td>2</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td>Mobile Support (iOS)</td>
+        <td>20%</td>
+        <td><strong>5</strong></td>
+        <td>4</td>
+        <td>3</td>
+        <td>4</td>
+        <td>3</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td>Setup Simplicity</td>
+        <td>15%</td>
+        <td><strong>5</strong></td>
+        <td>4</td>
+        <td>2</td>
+        <td>4</td>
+        <td>2</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>Self-Hostable / Sovereignty</td>
+        <td>15%</td>
+        <td>3 (Headscale)</td>
+        <td>4</td>
+        <td><strong>5</strong></td>
+        <td><strong>5</strong></td>
+        <td><strong>5</strong></td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td>Throughput / Performance</td>
+        <td>10%</td>
+        <td><strong>5</strong></td>
+        <td>4</td>
+        <td>4</td>
+        <td>4</td>
+        <td><strong>5</strong></td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td>Security Model</td>
+        <td>10%</td>
+        <td>4</td>
+        <td>4</td>
+        <td><strong>5</strong></td>
+        <td>4</td>
+        <td><strong>5</strong></td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td>Ecosystem / Integrations</td>
+        <td>5%</td>
+        <td><strong>5</strong></td>
+        <td>4</td>
+        <td>3</td>
+        <td>3</td>
+        <td>3</td>
+        <td>4</td>
+      </tr>
+      <tr style="background: var(--accent-light); font-weight: 700;">
+        <td>Weighted Score</td>
+        <td></td>
+        <td style="color: var(--green);">4.55</td>
+        <td>4.00</td>
+        <td>3.35</td>
+        <td>4.05</td>
+        <td>3.15</td>
+        <td>3.80</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p style="font-size: 0.84rem; color: var(--text-muted); margin-top: 0.25rem;">The matrix is intentionally opinionated. Product capabilities, pricing, and NAT-traversal behavior change over time, so treat the scores as a decision aid rather than a measurement.</p>
+
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 4. TECHNICAL APPROACHES                                            -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<h2 id="technical">4. Technical Approaches</h2>
+
+<p>This section explains <em>how</em> the solutions from the previous section work under the hood — the two fundamental communication models and the protocols they use.</p>
+
+
+<!-- 4.1 Relay Based Communication -->
+<h3 id="relay">4.1 Relay Based Communication</h3>
+
+<p>In the relay model, both devices establish <em>outgoing</em> tunnels to a central server. The server forwards all traffic between them. This always works because outgoing connections pass through any NAT.</p>
+
+<div class="diagram">
+  ┌──────────────┐                 ┌──────────────────┐                 ┌──────────────┐
+  │   iPhone     │   <span class="ok">outgoing</span>      │   Relay Server   │   <span class="ok">outgoing</span>      │   MacBook    │
+  │              │════tunnel══════▶│                  │◀══════tunnel════│              │
+  │              │◀═══encrypted═══▶│  Forwards all    │◀═══encrypted═══▶│              │
+  └──────────────┘    traffic      │  traffic between │    traffic      └──────────────┘
+                                   │  the two clients │
+                                   └──────────────────┘
+</div>
+
+<div class="step-row"><span class="step">1</span><p>iPhone opens an <strong>outgoing</strong> encrypted tunnel to relay server → Carrier NAT creates mapping → connected.</p></div>
+<div class="step-row"><span class="step">2</span><p>MacBook opens an <strong>outgoing</strong> encrypted tunnel to same server → Office NAT creates mapping → connected.</p></div>
+<div class="step-row"><span class="step">3</span><p>Server assigns virtual IPs and forwards packets between the two tunnels.</p></div>
+
+<div class="infobox infobox-orange">
+  <strong>Trade-off:</strong> Reliability is close to universal because both sides make outbound connections, but the server stays on the data path — adding latency, bandwidth cost, and a single point of failure. Unless the application adds its own end-to-end encryption, the relay or VPN server can inspect forwarded traffic after tunnel termination.
+</div>
+
+
+<!-- 4.2 Direct P2P Communication -->
+<h3 id="direct-p2p">4.2 Direct P2P Communication</h3>
+
+<p>In the direct P2P model, a coordination server introduces the peers, then they establish a direct connection via <strong>UDP hole punching</strong>. The trick: both devices simultaneously send packets to each other's discovered public endpoints, creating NAT mappings from both sides.</p>
+
+<div class="diagram">
+  <span class="comment">── Step 1: Both peers send UDP packets simultaneously ──</span>
+
+  iPhone sends UDP to 85.195.44.8:51820  (MacBook's NAT public side)
+    → Carrier NAT creates mapping: <span class="ok">10.48.12.97:5000 ↔ 85.195.22.1:43210 → 85.195.44.8:51820</span>
+    → Packet arrives at MacBook's NAT...
+    → MacBook's NAT has no mapping yet → <span class="highlight">packet dropped</span> (but that's OK!)
+
+  MacBook sends UDP to 85.195.22.1:43210  (iPhone's NAT public side)
+    → Office NAT creates mapping: <span class="ok">192.168.1.42:51820 ↔ 85.195.44.8:51820 → 85.195.22.1:43210</span>
+    → Packet arrives at iPhone's Carrier NAT...
+    → Carrier NAT HAS a mapping for 85.195.44.8:51820 → <span class="ok">✓ PACKET FORWARDED to iPhone!</span>
+
+  <span class="comment">── Step 2: Now the "hole" is punched in BOTH NATs ──</span>
+
+  iPhone sends another UDP to MacBook
+    → Arrives at MacBook's NAT, which now has a mapping for iPhone's address
+    → <span class="ok">✓ FORWARDED to MacBook!</span>
+
+  <span class="ok">Both NATs now have active mappings → bidirectional direct communication!</span>
+</div>
+
+<div class="infobox infobox-purple">
+  <strong>Why UDP and not TCP?</strong> UDP is connectionless — you can send a packet without a handshake. TCP requires a three-way handshake (SYN → SYN-ACK → ACK) which must complete in order. TCP simultaneous-open exists in theory, but is far less reliable across consumer NATs and is rarely the practical choice for mesh overlays. For the approaches discussed here, <strong>practical direct traversal is overwhelmingly UDP-based.</strong>
+</div>
+
+
+<!-- 4.3 Relay vs. Direct P2P -->
+<h3 id="relay-vs-p2p">4.3 Relay vs. Direct P2P</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Relay Based<br>(Traditional VPN)</th>
+      <th>Direct P2P<br>(Overlay Network)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Data path</strong></td>
+      <td>All traffic through server</td>
+      <td>Direct device-to-device</td>
+    </tr>
+    <tr>
+      <td><strong>Latency</strong></td>
+      <td>Added round-trip to server</td>
+      <td>Near-direct (as if on same LAN)</td>
+    </tr>
+    <tr>
+      <td><strong>Server bandwidth</strong></td>
+      <td>Must handle all traffic</td>
+      <td>Only control messages (tiny)</td>
+    </tr>
+    <tr>
+      <td><strong>Server cost</strong></td>
+      <td>Scales with traffic volume</td>
+      <td>Minimal (or free tiers)</td>
+    </tr>
+    <tr>
+      <td><strong>Reliability</strong></td>
+      <td>100% (outgoing always works)</td>
+      <td>Depends on NAT behavior; relay fallback fills the gaps</td>
+    </tr>
+    <tr>
+      <td><strong>Works through CGNAT</strong></td>
+      <td>Yes</td>
+      <td>Yes (with relay fallback)</td>
+    </tr>
+    <tr>
+      <td><strong>Setup complexity</strong></td>
+      <td>Server provisioning needed</td>
+      <td>Install app + join network</td>
+    </tr>
+    <tr>
+      <td><strong>Encryption</strong></td>
+      <td>Usually server-terminated or server-visible at tunnel layer</td>
+      <td>Peer-to-peer transport encryption on the direct path</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!-- 4.4 Difficulty Levels -->
+<h3 id="difficulty">4.4 Difficulty Levels of P2P Direct Communication</h3>
+
+<p>The likelihood of a direct P2P path depends on <strong>both NAT behaviors, IPv6 availability, whether UDP is allowed, and the specific traversal implementation</strong>. Treat the scale below as a rule of thumb, not a guarantee:</p>
+
+<div class="difficulty-scale">
+  <div class="diff-row">
+    <div class="diff-label">Trivial</div>
+    <div class="diff-bar-wrap"><div class="diff-bar trivial">Direct</div></div>
+    <div class="diff-example">No NAT traversal needed</div>
+  </div>
+  <div class="diff-row">
+    <div class="diff-label">Easy</div>
+    <div class="diff-bar-wrap"><div class="diff-bar easy">Usually direct</div></div>
+    <div class="diff-example">Standard hole punch</div>
+  </div>
+  <div class="diff-row active">
+    <div class="diff-label">Medium</div>
+    <div class="diff-bar-wrap"><div class="diff-bar medium">Mixed</div></div>
+    <div class="diff-example">Advanced heuristics may help</div>
+  </div>
+  <div class="diff-row">
+    <div class="diff-label">Hard</div>
+    <div class="diff-bar-wrap"><div class="diff-bar hard">Often relayed</div></div>
+    <div class="diff-example">Hard NAT on one or both sides</div>
+  </div>
+  <div class="diff-row">
+    <div class="diff-label">Extreme</div>
+    <div class="diff-bar-wrap"><div class="diff-bar extreme">Relay likely</div></div>
+    <div class="diff-example">UDP blocked, relay likely</div>
+  </div>
+  <div class="diff-row">
+    <div class="diff-label">Adversarial</div>
+    <div class="diff-bar-wrap"><div class="diff-bar adversarial">Blocked</div></div>
+    <div class="diff-example">DPI / active blocking</div>
+  </div>
+</div>
+
+<h3>Breakdown by Scenario</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Level</th>
+      <th>Side A</th>
+      <th>Side B</th>
+      <th>Example</th>
+      <th>Expected Path</th>
+      <th>Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="diff-badge diff-badge-green">Trivial</span></td>
+      <td>Public IP</td>
+      <td>Any</td>
+      <td>Cloud server ↔ anything</td>
+      <td>Direct</td>
+      <td>At least one side is directly reachable. No hole punching needed.</td>
+    </tr>
+    <tr>
+      <td><span class="diff-badge diff-badge-green">Easy</span></td>
+      <td>Cone NAT</td>
+      <td>Cone NAT</td>
+      <td>Home LAN ↔ Home LAN</td>
+      <td>Usually direct</td>
+      <td>Both NATs create stable port mappings. Simple STUN hole punching works.</td>
+    </tr>
+    <tr style="background: var(--accent-light);">
+      <td><span class="diff-badge diff-badge-yellow">Medium</span></td>
+      <td><strong>Hard NAT / CGNAT</strong></td>
+      <td><strong>Easier consumer NAT</strong></td>
+      <td><strong>iPhone 5G ↔ MacBook LAN</strong></td>
+      <td><strong>Mixed; direct or relay</strong></td>
+      <td><strong>One side may be easier to predict than the other, which can help advanced traversal logic, but direct connectivity is still not guaranteed. Relay fallback remains important.</strong></td>
+    </tr>
+    <tr>
+      <td><span class="diff-badge diff-badge-red">Hard</span></td>
+      <td>Hard NAT / CGNAT</td>
+      <td>Hard NAT / CGNAT</td>
+      <td>iPhone 5G ↔ Android 5G</td>
+      <td>Usually relayed</td>
+      <td>Both sides are hard to predict. Some products may still connect directly, but the odds are lower and relay is commonly needed.</td>
+    </tr>
+    <tr>
+      <td><span class="diff-badge diff-badge-red">Extreme</span></td>
+      <td>Any NAT</td>
+      <td>Enterprise FW (UDP blocked)</td>
+      <td>Phone ↔ corporate laptop</td>
+      <td>Relayed if available</td>
+      <td>Firewall blocks UDP, so direct traversal often fails and the product must use a relay or alternate transport.</td>
+    </tr>
+    <tr>
+      <td><span class="diff-badge diff-badge-red">Adversarial</span></td>
+      <td>Any</td>
+      <td>State-level DPI</td>
+      <td>Device behind censorship</td>
+      <td>Often blocked</td>
+      <td>DPI or active interference can detect and block tunnel protocols. Not central to the Swiss enterprise scenario, but relevant conceptually.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Why Asymmetry Can Help</h3>
+
+<div class="diagram">
+  <span class="comment">── One hard NAT + one easier NAT ──</span>
+
+  Hard NAT side                        Easier NAT side
+  Mapping may vary per destination     Mapping/filtering is more predictable
+
+  Hard side sends outward:
+    → creates a fresh public mapping that may be difficult to predict exactly
+
+  Easier side sends outward:
+    → often preserves a more stable public endpoint long enough for replies
+
+  <span class="ok">✓ If one side is easier to predict, traversal logic has less uncertainty</span>
+  <span class="comment">  This can improve the odds of a direct path, especially with vendor-specific heuristics,</span>
+  <span class="comment">  but it is still not guaranteed and many sessions will relay.</span>
+
+  <span class="comment">── Hard NAT + Hard NAT ──</span>
+
+  Both sides are difficult to predict
+  <span class="highlight">More guesswork, lower odds of a direct path, relay more likely</span>
+</div>
+
+
+<!-- 4.5 Tunneling Protocols -->
+<h3 id="protocols">4.5 Tunneling Protocols</h3>
+
+<p>The underlying protocols that carry the encrypted tunnel traffic. They differ in network layer, transport, and NAT compatibility:</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Protocol</th>
+        <th>Layer</th>
+        <th>Transport</th>
+        <th>NAT Traversal</th>
+        <th>P2P Direct</th>
+        <th>Mobile Friendly</th>
+        <th>Best For</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>SSH Tunneling</strong></td>
+        <td><span class="layer-label l7">L7</span></td>
+        <td>TCP</td>
+        <td><span class="badge badge-red">None</span></td>
+        <td>No — requires accessible server</td>
+        <td>Poor — TCP-over-TCP, no roaming</td>
+        <td>Dev access, port forwarding</td>
+      </tr>
+      <tr>
+        <td><strong>TLS Tunneling</strong></td>
+        <td><span class="layer-label l7">L7</span></td>
+        <td>TCP</td>
+        <td><span class="badge badge-red">None</span></td>
+        <td>No — client-server model</td>
+        <td>Poor</td>
+        <td>HTTPS reverse proxies</td>
+      </tr>
+      <tr>
+        <td><strong>SOCKS5</strong></td>
+        <td><span class="layer-label l7">L7</span></td>
+        <td>TCP (UDP opt.)</td>
+        <td><span class="badge badge-red">None</span></td>
+        <td>No — proxy model</td>
+        <td>Fair</td>
+        <td>Application-level proxying</td>
+      </tr>
+      <tr>
+        <td><strong>OpenVPN</strong></td>
+        <td><span class="layer-label l3">L3</span></td>
+        <td>TCP or UDP</td>
+        <td><span class="badge badge-orange">Fair</span> (UDP mode)</td>
+        <td>No — client-server</td>
+        <td>Fair — reconnects slowly</td>
+        <td>Legacy VPN deployments</td>
+      </tr>
+      <tr class="highlight-row">
+        <td><strong>WireGuard</strong></td>
+        <td><span class="layer-label l3">L3</span></td>
+        <td>UDP</td>
+        <td><span class="badge badge-green">Good</span></td>
+        <td>Yes — with coordination layer</td>
+        <td><strong>Excellent</strong></td>
+        <td>VPN, mesh networks, P2P tunnels</td>
+      </tr>
+      <tr class="highlight-row">
+        <td><strong>QUIC / MASQUE</strong></td>
+        <td><span class="layer-label l4">L4/L7</span></td>
+        <td>UDP</td>
+        <td><span class="badge badge-green">Good</span></td>
+        <td>Usually proxy-based, not inherently peer-to-peer</td>
+        <td><strong>Excellent</strong></td>
+        <td>HTTP/3 tunneling, mobile-first</td>
+      </tr>
+      <tr class="highlight-row">
+        <td><strong>WebRTC (DTLS-SRTP)</strong></td>
+        <td><span class="layer-label l7">L7</span></td>
+        <td>UDP (ICE)</td>
+        <td><span class="badge badge-green">Excellent</span></td>
+        <td>Yes — designed for P2P</td>
+        <td>Good — heavy for non-media</td>
+        <td>Real-time media, data channels</td>
+      </tr>
+      <tr>
+        <td><strong>IPsec / IKEv2</strong></td>
+        <td><span class="layer-label l3">L3</span></td>
+        <td>UDP + ESP</td>
+        <td><span class="badge badge-orange">Fair</span></td>
+        <td>Possible but complex</td>
+        <td>Good — MOBIKE roaming</td>
+        <td>Enterprise VPN, site-to-site</td>
+      </tr>
+      <tr>
+        <td><strong>Generic TCP Tunnel</strong></td>
+        <td><span class="layer-label l4">L4</span></td>
+        <td>TCP</td>
+        <td><span class="badge badge-red">None</span></td>
+        <td>No</td>
+        <td>Poor — TCP meltdown risk</td>
+        <td>Firewall bypass (UDP blocked)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 5. SUMMARY & RECOMMENDATION                                        -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<h2 id="summary">5. Summary &amp; Recommendation</h2>
+
+<div class="infobox infobox-blue">
+  <strong>The NAT problem in one sentence:</strong> NAT only allows <em>replies</em> to connections started from the inside — so if both devices are behind NAT, neither can start a connection to the other. Overlay networks solve this by using a public coordination server for peer discovery, then establishing direct encrypted P2P tunnels via UDP hole punching.
+</div>
+
+
+<!-- 5.1 Reference Case -->
+<h3 id="reference-case">5.1 Reference Case: iPhone 5G ↔ MacBook LAN</h3>
+
+<div class="diagram">
+┌────────────────┐                                    ┌────────────────┐
+│   iPhone 5G    │                                    │ MacBook (LAN)  │
+│                │                                    │                │
+│ Tailscale App  │──── WireGuard UDP ────────────────▶│ Tailscale CLI  │
+│ 100.x.y.z     │    (direct when possible; relay    │ 100.x.y.w     │
+│                │     fallback otherwise)           │                │
+│                │                                    │                │
+└───────┬────────┘                                    └───────┬────────┘
+        │                                                     │
+        │  ┌──────────────────────────────┐                   │
+        └──│  Coordination Server         │───────────────────┘
+           │  (Tailscale SaaS / Headscale)│
+           │                              │
+           │  • Key exchange              │
+           │  • Endpoint discovery        │
+           │  • NAT type detection        │
+           │  • DERP relay (fallback)     │
+           └──────────────────────────────┘
+
+ Connection flow:
+ 1. Both devices register with coordination server
+ 2. Server shares peer public keys + discovered endpoints
+ 3. NAT traversal engine attempts direct UDP path
+ 4. If direct fails → traffic relays through nearest DERP server
+ 5. Background: continuously re-attempts direct connection
+</div>
+
+<p>In Swiss mobile networks, CGNAT is common enough that you should expect a mix of direct and relayed paths rather than guaranteed P2P. In practice, a product like Tailscale usually converges quickly to either a direct WireGuard path or a DERP relay. The main user-visible benefit is stable addressing, automatic recovery, and seamless fallback — not a guarantee that every session will be direct.</p>
+
+
+<!-- 5.2 Recommendation -->
+<h3 id="recommendation">5.2 Recommendation</h3>
+
+<div class="verdict">
+  <h4>Primary: Tailscale (or Headscale for data sovereignty)</h4>
+  <p><strong>Tailscale</strong> offers the best current balance of operational simplicity, mobile support, stable addressing, and reliable fallback for this scenario. For Swiss data sovereignty, <strong>Headscale</strong> lets you self-host the control plane while keeping compatibility with the Tailscale client ecosystem.</p>
+</div>
+
+<div class="cards">
+  <div class="card" style="border-color: var(--green);">
+    <h4><span class="badge badge-green">Quick Win</span> Tailscale Free/Personal</h4>
+    <p>Install on iPhone + MacBook, sign in, and get stable device-to-device addressing with automatic direct-or-relay fallback. As of March 2026, the Personal plan covers up to 100 devices / 3 users and is aimed at personal rather than business use.</p>
+  </div>
+  <div class="card" style="border-color: var(--accent);">
+    <h4><span class="badge badge-blue">Production</span> Headscale + Tailscale Clients</h4>
+    <p>Self-host Headscale in a Swiss datacenter and keep the official Tailscale clients on endpoints. If you also want self-hosted relay infrastructure, add DERP separately; otherwise public DERP can remain the fallback path.</p>
+  </div>
+  <div class="card" style="border-color: var(--purple);">
+    <h4><span class="badge badge-cyan">Alternative</span> NetBird (fully OSS)</h4>
+    <p>Fully open-source stack including management server. Standard ICE/STUN/TURN, WireGuard data plane, self-hostable, good iOS support.</p>
+  </div>
+</div>
+
+
+<!-- 5.3 Outlook -->
+<h3 id="outlook">5.3 Outlook: QUIC, MASQUE &amp; Modern Tunneling</h3>
+
+<p>While WireGuard-based overlay networks remain the most practical choice today, the tunneling landscape is also moving toward <strong>QUIC-based transports and HTTP/3 proxying</strong>:</p>
+
+<div class="cards">
+  <div class="card">
+    <h4><span class="badge badge-blue">QUIC</span> The New Transport</h4>
+    <p>HTTP/3 adoption is growing, and Cloudflare reported that <strong>21%</strong> of requests on its network used HTTP/3 in 2025. QUIC's <strong>connection migration</strong> can help sessions survive address changes, which is valuable on mobile networks. Because QUIC often rides on the same UDP/443 path as modern web traffic, it can also be easier to accommodate in enterprise environments than custom tunnel protocols.</p>
+  </div>
+  <div class="card">
+    <h4><span class="badge badge-cyan">MASQUE</span> IETF Standard Tunneling</h4>
+    <p><strong>MASQUE</strong> builds on HTTP over QUIC to standardize proxy-style tunneling. Today the key RFCs cover <strong>UDP proxying</strong> (RFC 9298) and <strong>IP proxying</strong> (RFC 9484). MASQUE is important for relay and proxy architectures, but it is not the same thing as generic peer-to-peer NAT traversal.</p>
+  </div>
+  <div class="card">
+    <h4><span class="badge badge-orange">What This Means</span></h4>
+    <p>Some future overlay systems may adopt QUIC-based transports or MASQUE-compatible relay modes where that improves firewall compatibility or mobility. That would complement today's WireGuard meshes, not automatically replace the need for coordination, policy, identity, and fallback relays.</p>
+  </div>
+</div>
+
+<div class="infobox infobox-green">
+  <strong>For now:</strong> Tailscale/Headscale with WireGuard remains the pragmatic choice for this use case. Keep QUIC/MASQUE on the radar as complementary transport and relay technology, not as a proven drop-in replacement for today's mesh overlays.
+</div>
+
+
+<!-- Footer -->
+<div class="footer">
+  <p>OpenHanse - Wiki - Network Address Translation (NAT)<br>
+  Selected sources checked: RFC 4787, RFC 8445, RFC 9298, RFC 9484, Tailscale device connectivity and pricing docs, Cloudflare Radar 2025 Year in Review, ZeroTier docs, NetBird docs, Nebula docs.<br>
+  Last updated: March 22, 2026</p>
+</div>
+
+</body>
+</html>
